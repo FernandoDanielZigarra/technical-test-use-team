@@ -6,7 +6,7 @@ export interface Task {
   readonly description?: string;
   readonly order: number;
   readonly columnId: string;
-  readonly assigneeId?: number;
+  readonly assigneeId?: string | null;
   readonly assignee?: User;
   readonly createdAt: string;
   readonly updatedAt: string;

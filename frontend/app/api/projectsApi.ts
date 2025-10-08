@@ -1,4 +1,5 @@
 import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
+import { getAuthToken } from '~/middleware/auth';
 import type {
   Project,
   CreateProjectDto,
@@ -19,7 +20,7 @@ export const projectsApi = createApi({
   baseQuery: fetchBaseQuery({
     baseUrl: 'http://localhost:3000',
     prepareHeaders: (headers) => {
-      const token = localStorage.getItem('token');
+      const token = getAuthToken();
       if (token) {
         headers.set('Authorization', `Bearer ${token}`);
       }
@@ -28,7 +29,7 @@ export const projectsApi = createApi({
   }),
   tagTypes: ['Project', 'Column', 'Task', 'Participant'],
   endpoints: (builder) => ({
-    // Projects
+    
     getProjects: builder.query<Project[], void>({
       query: () => '/projects',
       providesTags: ['Project'],
@@ -43,7 +44,19 @@ export const projectsApi = createApi({
         method: 'POST',
         body: data,
       }),
-      invalidatesTags: ['Project'],
+      async onQueryStarted(arg, { dispatch, queryFulfilled }) {
+        try {
+          const { data: newProject } = await queryFulfilled;
+          
+          dispatch(
+            projectsApi.util.updateQueryData('getProjects', undefined, (draft) => {
+              draft.push(newProject);
+            })
+          );
+        } catch {
+          
+        }
+      },
     }),
     updateProject: builder.mutation<Project, { id: string; data: UpdateProjectDto }>({
       query: ({ id, data }) => ({
@@ -58,10 +71,22 @@ export const projectsApi = createApi({
         url: `/projects/${id}`,
         method: 'DELETE',
       }),
-      invalidatesTags: ['Project'],
+      async onQueryStarted(id, { dispatch, queryFulfilled }) {
+        
+        const patchResult = dispatch(
+          projectsApi.util.updateQueryData('getProjects', undefined, (draft) => {
+            return draft.filter((project) => project.id !== id);
+          })
+        );
+        try {
+          await queryFulfilled;
+        } catch {
+          
+          patchResult.undo();
+        }
+      },
     }),
 
-    // Participants
     addParticipant: builder.mutation<ProjectParticipant, { projectId: string; data: AddParticipantDto }>({
       query: ({ projectId, data }) => ({
         url: `/projects/${projectId}/participants`,
@@ -83,8 +108,30 @@ export const projectsApi = createApi({
         'Participant',
       ],
     }),
+    leaveProject: builder.mutation<{ message: string }, { projectId: string; newOwnerId?: string }>({
+      query: ({ projectId, newOwnerId }) => ({
+        url: `/projects/${projectId}/leave`,
+        method: 'POST',
+        body: newOwnerId ? { newOwnerId } : {},
+      }),
+      invalidatesTags: (result, error, { projectId }) => [
+        { type: 'Project', id: projectId },
+        'Project',
+        'Participant',
+      ],
+    }),
+    updateParticipantRole: builder.mutation<ProjectParticipant, { projectId: string; participantId: string; role: string }>({
+      query: ({ projectId, participantId, role }) => ({
+        url: `/projects/${projectId}/participants/${participantId}/role`,
+        method: 'PATCH',
+        body: { role },
+      }),
+      invalidatesTags: (result, error, { projectId }) => [
+        { type: 'Project', id: projectId },
+        'Participant',
+      ],
+    }),
 
-    // Columns
     getColumns: builder.query<Column[], string>({
       query: (projectId) => `/columns/project/${projectId}`,
       providesTags: ['Column'],
@@ -160,6 +207,14 @@ export const projectsApi = createApi({
       }),
       invalidatesTags: ['Task'],
     }),
+
+    exportBacklog: builder.mutation<{ success: boolean; message: string; tasksCount: number; email: string },{ projectId: string; email: string }>({
+      query: ({ projectId, email }) => ({
+        url: `/projects/${projectId}/export-backlog`,
+        method: 'POST',
+        body: { email },
+      }),
+    }),
   }),
 });
 
@@ -171,6 +226,8 @@ export const {
   useDeleteProjectMutation,
   useAddParticipantMutation,
   useRemoveParticipantMutation,
+  useLeaveProjectMutation,
+  useUpdateParticipantRoleMutation,
   useGetColumnsQuery,
   useCreateColumnMutation,
   useUpdateColumnMutation,
@@ -182,4 +239,5 @@ export const {
   useUpdateTaskMutation,
   useMoveTaskMutation,
   useDeleteTaskMutation,
+  useExportBacklogMutation,
 } = projectsApi;

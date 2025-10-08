@@ -29,8 +29,7 @@ const projectSlice = createSlice({
     setSocketConnected: (state, action: PayloadAction<boolean>) => {
       state.isSocketConnected = action.payload;
     },
-    
-    // Real-time updates
+
     updateProject: (state, action: PayloadAction<Partial<Project>>) => {
       if (state.currentProject) {
         state.currentProject = { ...state.currentProject, ...action.payload };
@@ -124,7 +123,6 @@ const projectSlice = createSlice({
       }
     },
 
-    // Optimistic updates for drag and drop
     reorderTasksLocally: (state, action: PayloadAction<{
       columnId: string;
       tasks: Task[];

@@ -1,0 +1,101 @@
+{
+  "name": "Kanban Backlog Export",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "kanban-export",
+        "options": {}
+      },
+      "name": "Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 1.1,
+      "position": [
+        -128,
+        -272
+      ],
+      "id": "a6248fa5-7737-498b-aee7-2f48c39308ef",
+      "webhookId": "kanban-export"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Convert JSON array to CSV\n// The webhook sends data with this structure in body:\n// { projectId, projectName, email, tasks: [...], exportedBy, exportedAt }\n\nconst items = $input.all();\n\nif (!items || items.length === 0) {\n  throw new Error('No data received from webhook');\n}\n\n// Los datos llegan en el campo 'body' del webhook\nconst data = items[0].json.body || items[0].json;\nconst tasks = data.tasks || [];\nconst projectName = data.projectName || 'Proyecto';\nconst email = data.email || '';\n\nif (!email) {\n  throw new Error('No se proporcionó un email válido');\n}\n\n// Si no hay tareas, crear un CSV vacío con solo headers\nif (tasks.length === 0) {\n  const headers = ['id', 'title', 'description', 'column', 'assignee', 'createdAt', 'updatedAt'];\n  const csvContent = headers.join(',') + '\\n';\n  const binaryData = Buffer.from(csvContent, 'utf-8');\n  \n  return [\n    {\n      json: {\n        projectName: projectName,\n        email: email,\n        tasksCount: 0,\n        fileName: `${projectName.toLowerCase().replace(/\\s+/g, '-')}-backlog-export.csv`,\n        mimeType: 'text/csv',\n        exportedAt: data.exportedAt || new Date().toISOString(),\n        note: 'El proyecto no tiene tareas para exportar'\n      },\n      binary: {\n        data: {\n          data: binaryData.toString('base64'),\n          mimeType: 'text/csv',\n          fileName: `${projectName.toLowerCase().replace(/\\s+/g, '-')}-backlog-export.csv`\n        }\n      }\n    }\n  ];\n}\n\n// CSV Headers with all fields\nconst headers = ['id', 'title', 'description', 'column', 'assignee', 'createdAt', 'updatedAt'];\n\n// Create CSV content\nlet csvContent = headers.join(',') + '\\n';\n\n// Add each task as a row with proper escaping\ntasks.forEach(task => {\n  const row = [\n    task.id || '',\n    `\"${(task.title || '').replace(/\"/g, '\"\"')}\"`,\n    `\"${(task.description || '').replace(/\"/g, '\"\"')}\"`,\n    `\"${(task.column || '').replace(/\"/g, '\"\"')}\"`,\n    `\"${(task.assignee || 'Sin asignar').replace(/\"/g, '\"\"')}\"`,\n    task.createdAt || '',\n    task.updatedAt || ''\n  ];\n  csvContent += row.join(',') + '\\n';\n});\n\n// Convert to binary data for email attachment\nconst binaryData = Buffer.from(csvContent, 'utf-8');\n\nreturn [\n  {\n    json: {\n      projectName: projectName,\n      email: email,\n      tasksCount: tasks.length,\n      fileName: `${projectName.toLowerCase().replace(/\\s+/g, '-')}-backlog-export.csv`,\n      mimeType: 'text/csv',\n      exportedAt: data.exportedAt || new Date().toISOString()\n    },\n    binary: {\n      data: {\n        data: binaryData.toString('base64'),\n        mimeType: 'text/csv',\n        fileName: `${projectName.toLowerCase().replace(/\\s+/g, '-')}-backlog-export.csv`\n      }\n    }\n  }\n];"
+      },
+      "name": "Convert to CSV",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        96,
+        -272
+      ],
+      "id": "34f46614-eb09-4a96-9875-008233deaa3c"
+    },
+    {
+      "parameters": {
+        "sendTo": "={{$json.email}}",
+        "subject": "=Exportación de Backlog - {{$json.projectName}}",
+        "message": "=<!DOCTYPE html>\n<html lang=\"es\">\n<head>\n  <meta charset=\"UTF-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />\n  <title>Exportación de Backlog</title>\n  <style>\n    body {\n      font-family: \"Segoe UI\", Roboto, Helvetica, Arial, sans-serif;\n      background-color: #f4f6f8;\n      color: #333;\n      margin: 0;\n      padding: 0;\n    }\n\n    .container {\n      max-width: 640px;\n      margin: 40px auto;\n      background: #ffffff;\n      border-radius: 6px;\n      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);\n      overflow: hidden;\n    }\n\n    .header {\n      background-color: #1f4e79;\n      color: #ffffff;\n      text-align: center;\n      padding: 32px 20px;\n    }\n\n    .header h1 {\n      font-size: 24px;\n      margin: 0;\n      font-weight: 600;\n    }\n\n    .content {\n      padding: 32px;\n    }\n\n    .content p {\n      margin: 12px 0;\n      color: #444;\n      font-size: 15px;\n    }\n\n    .info-box {\n      background-color: #f8f9fa;\n      border: 1px solid #e1e4e8;\n      border-left: 4px solid #1f4e79;\n      padding: 20px;\n      margin: 24px 0;\n      border-radius: 4px;\n    }\n\n    .info-item {\n      display: flex;\n      justify-content: space-between;\n      padding: 6px 0;\n      font-size: 14px;\n    }\n\n    .info-item .label {\n      font-weight: 600;\n      color: #1f4e79;\n    }\n\n    .csv-info {\n      background-color: #f5f8fc;\n      border: 1px solid #d6e0f0;\n      border-radius: 6px;\n      padding: 20px;\n      margin: 30px 0;\n    }\n\n    .csv-info h3 {\n      color: #1f4e79;\n      font-size: 17px;\n      margin-top: 0;\n      margin-bottom: 12px;\n    }\n\n    .csv-columns {\n      list-style: none;\n      padding: 0;\n      margin: 0;\n    }\n\n    .csv-columns li {\n      padding: 8px 0;\n      border-bottom: 1px solid #e0e6ed;\n      font-size: 14px;\n      color: #555;\n    }\n\n    .csv-columns li:last-child {\n      border-bottom: none;\n    }\n\n    .attachment-notice {\n      background-color: #fff7e6;\n      border: 1px solid #ffe2a6;\n      border-radius: 6px;\n      padding: 16px;\n      margin: 24px 0;\n      text-align: center;\n      color: #8a6d3b;\n      font-size: 14px;\n    }\n\n    .signature {\n      margin-top: 40px;\n      padding-top: 20px;\n      border-top: 1px solid #e9ecef;\n      color: #666;\n      font-size: 14px;\n    }\n\n    .signature strong {\n      color: #1f4e79;\n    }\n\n    .footer {\n      background-color: #f1f3f5;\n      border-top: 1px solid #e0e0e0;\n      padding: 20px;\n      text-align: center;\n      font-size: 12px;\n      color: #6c757d;\n    }\n  </style>\n</head>\n<body>\n  <div class=\"container\">\n    <div class=\"header\">\n      <h1>Exportación de Backlog</h1>\n    </div>\n\n    <div class=\"content\">\n      <p>Estimado/a,</p>\n\n      <p>Se ha completado exitosamente la exportación del backlog del proyecto <strong>{{$json.projectName}}</strong>.</p>\n\n      <div class=\"info-box\">\n        <div class=\"info-item\">\n          <span class=\"label\">Proyecto:</span>\n          <span class=\"value\">{{$json.projectName}}</span>\n        </div>\n        <div class=\"info-item\">\n          <span class=\"label\">Total de tareas:</span>\n          <span class=\"value\">{{$json.tasksCount}}</span>\n        </div>\n        <div class=\"info-item\">\n          <span class=\"label\">Fecha de exportación:</span>\n          <span class=\"value\">{{$json.exportedAt}}</span>\n        </div>\n        <div class=\"info-item\">\n          <span class=\"label\">Archivo adjunto:</span>\n          <span class=\"value\">{{$json.fileName}}</span>\n        </div>\n      </div>\n\n      <div class=\"attachment-notice\">\n        <p><strong>El archivo CSV se encuentra adjunto a este correo.</strong></p>\n        <p>Descárguelo para acceder al detalle completo de las tareas.</p>\n      </div>\n\n      <div class=\"csv-info\">\n        <h3>Contenido del archivo CSV</h3>\n        <p>El archivo contiene las siguientes columnas con información detallada de cada tarea:</p>\n        <ul class=\"csv-columns\">\n          <li><strong>ID de tarea</strong> – Identificador único</li>\n          <li><strong>Título</strong> – Nombre de la tarea</li>\n          <li><strong>Descripción</strong> – Detalles completos</li>\n          <li><strong>Columna</strong> – Estado actual (To Do, In Progress, Done, etc.)</li>\n          <li><strong>Usuario asignado</strong> – Responsable de la tarea</li>\n          <li><strong>Fecha de creación</strong> – Cuándo se creó la tarea</li>\n          <li><strong>Última actualización</strong> – Cuándo se modificó por última vez</li>\n        </ul>\n      </div>\n\n      <div class=\"signature\">\n        <p>Atentamente,</p>\n        <p><strong>Equipo de Kanban Board</strong></p>\n        <p style=\"font-size: 12px; color: #999; margin-top: 8px;\">\n          Sistema automatizado de exportación de proyectos\n        </p>\n      </div>\n    </div>\n\n    <div class=\"footer\">\n      <p>Este es un mensaje automático del sistema Kanban Board.</p>\n      <p>Por favor, no responda a este correo.</p>\n    </div>\n  </div>\n</body>\n</html>\n",
+        "options": {
+          "attachmentsUi": {
+            "attachmentsBinary": [
+              {}
+            ]
+          },
+          "senderName": "useTeam Mail Test"
+        }
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        320,
+        -272
+      ],
+      "id": "d54aabae-0dff-4c24-97f6-6e7bcfc8b1a6",
+      "name": "Send a message",
+      "webhookId": "42d4726c-b5f0-4d67-a4c4-b3293d61a60f",
+      "retryOnFail": false,
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "2cQ8Hod4nt5SBlAA",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Convert to CSV",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Convert to CSV": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "b2df48d5-4722-4f0e-8eee-48c53677840f",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "eeb7d2e19c2d6482ac70e73a8efc139ba50b03cbbfbdf17dbe700314bdc6def9"
+  },
+  "id": "SJnZmX8nO9SrVSb3",
+  "tags": []
+}

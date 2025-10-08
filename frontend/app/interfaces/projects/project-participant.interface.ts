@@ -5,6 +5,6 @@ export interface ProjectParticipant {
   readonly id: string;
   readonly role: ParticipantRole;
   readonly user: User;
-  readonly userId: number;
+  readonly userId: string;
   readonly projectId: string;
 }

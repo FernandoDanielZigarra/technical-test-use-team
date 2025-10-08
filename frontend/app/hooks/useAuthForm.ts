@@ -68,7 +68,7 @@ export function useAuthForm({ fields, onSubmit }: UseAuthFormOptions) {
           values: newValues,
           errors: newErrors,
           isValid,
-          generalError: null, // Clear general error when user types
+          generalError: null, 
         };
       });
     },

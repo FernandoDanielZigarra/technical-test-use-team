@@ -1,59 +1,138 @@
-# Technical Test - UseTeam
+# 🎯 Kanban Board - Tablero Colaborativo en Tiempo Real
 
-Aplicación full-stack de gestión de proyectos con tableros Kanban, autenticación y colaboración en tiempo real.
+## 📝 Descripción del Proyecto
 
-## 🚀 Inicio Rápido
+Aplicación web full-stack tipo **Trello** para gestión de proyectos mediante tableros Kanban colaborativos. Permite a múltiples usuarios trabajar simultáneamente en el mismo proyecto con **sincronización en tiempo real**, drag & drop de tareas, y exportación automatizada a CSV mediante **N8N**.
 
-### Con Docker (Recomendado)
+### ✨ Características Principales
+
+- 🎯 **Tablero Kanban** - Gestión visual de tareas con columnas personalizables
+- ⚡ **Tiempo Real** - Sincronización instantánea entre usuarios via WebSockets
+- 🔐 **Autenticación JWT** - Sistema seguro de registro y login
+- 🎨 **Interfaz Moderna** - UI responsive con modo claro/oscuro
+- 👥 **Colaboración** - Múltiples usuarios en el mismo proyecto
+- 📤 **Exportación** - Generación automática de CSV enviado por email
+- 🐳 **Docker Ready** - Despliegue con un solo comando
+- 🔄 **Arquitectura Modular** - Backend feature-based, frontend component-based
+
+**Estado:** ✅ **100% COMPLETADO**
+
+---
+
+## 🚀 Guía de Instalación Rápida
+
+### Prerequisitos
+
+- **Docker** y **Docker Compose** instalados
+- **Git** para clonar el repositorio
+- **OpenSSL** (incluido en Git Bash para Windows)
+
+> 💡 **Tip:** Docker Desktop incluye Docker Compose. [Descargar Docker Desktop](https://www.docker.com/products/docker-desktop)
+
+### 📦 Instalación en 4 Pasos
+
+#### 1️⃣ Clonar el Repositorio
 
 ```bash
-# Clonar repositorio
-git clone <repository-url>
-cd technical-test-useTeam
-
-# Iniciar todos los servicios
-docker-compose up --build
+git clone https://github.com/FernandoDanielZigarra/technical-test-use-team.git
+cd technical-test-use-team
 ```
 
-### Sin Docker
+#### 2️⃣ Configurar Variables de Entorno
 
-**Backend:**
 ```bash
-cd backend
-pnpm install
-pnpm prisma migrate dev
-pnpm run start:dev
+# Backend - Copiar y configurar
+cp backend/.env.example backend/.env
+
+# Frontend - Copiar y configurar
+cp frontend/.env.example frontend/.env
 ```
 
-**Frontend:**
+> 📘 **Nota:** Los valores por defecto en `.env.example` funcionan correctamente para desarrollo. Si deseas personalizarlos, edita los archivos `.env` creados.
+
+**Variables importantes a considerar:**
+- `JWT_SECRET` - Cámbialo en producción por una cadena aleatoria fuerte
+- `MONGO_ROOT_PASSWORD` - Contraseña de MongoDB (ya configurada en docker-compose.yml)
+- `N8N_BASIC_AUTH_PASSWORD` - Contraseña para acceder a N8N
+
+#### 3️⃣ Generar Keyfile de MongoDB
+
+MongoDB requiere un keyfile para el Replica Set (necesario para transacciones):
+
 ```bash
-cd frontend
-pnpm install
-pnpm run dev
+# Linux / Mac / Git Bash (Windows)
+openssl rand -base64 756 > mongo-keyfile
+chmod 400 mongo-keyfile
+
+# PowerShell (Windows alternativo)
+# openssl rand -base64 756 | Out-File -Encoding ASCII mongo-keyfile
 ```
 
-## 🌐 Acceso
+> ⚠️ **Importante:** Sin este archivo, MongoDB no iniciará correctamente.
 
-- **Frontend**: http://localhost:5173
-- **Backend API**: http://localhost:3000
-- **Database**: PostgreSQL en puerto 5432
+#### 4️⃣ Levantar los Contenedores
 
-## 📚 Documentación
+```bash
+# Construir imágenes y levantar servicios
+docker-compose up -d
 
-- [Arquitectura del Frontend](./frontend/ARCHITECTURE.md)
-- [Resumen de Refactorización](./frontend/REFACTORING_SUMMARY.md)
+# Ver logs de los servicios (opcional)
+docker-compose logs -f
 
-## 🛠️ Stack Tecnológico
+# Verificar que todos los contenedores estén corriendo
+docker-compose ps
+```
 
-**Backend:**
-- NestJS + Prisma ORM
-- PostgreSQL
-- JWT Authentication
-- WebSockets
+**Resultado esperado:**
+```
+NAME                    STATUS          PORTS
+technical-test-mongo    Up 2 minutes    0.0.0.0:27017->27017/tcp
+technical-test-backend  Up 1 minute     0.0.0.0:3000->3000/tcp
+technical-test-frontend Up 1 minute     0.0.0.0:5173->5173/tcp
+technical-test-n8n      Up 1 minute     0.0.0.0:5678->5678/tcp
+```
 
-**Frontend:**
-- React 18 + TypeScript
-- React Router 7
-- Redux Toolkit + RTK Query
-- Tailwind CSS
-- Vite
+### 🎉 ¡Listo! Accede a las Aplicaciones
+
+| Servicio | URL | Descripción |
+|----------|-----|-------------|
+| **Frontend** | http://localhost:5173 | Aplicación principal |
+| **Backend API** | http://localhost:3000 | API RESTful + WebSockets |
+| **N8N** | http://localhost:5678 | Automatización y workflows |
+| **MongoDB** | mongodb://localhost:27017 | Base de datos |
+
+**Credenciales por defecto:**
+- **N8N:** Usuario: `admin` / Password: `admin_change_me`
+- **MongoDB:** Usuario: `root` / Password: `example_change_me`
+
+---
+
+## 🛠️ Comandos Útiles de Docker
+
+```bash
+# Ver logs de todos los servicios
+docker-compose logs -f
+
+# Ver logs de un servicio específico
+docker-compose logs -f backend
+docker-compose logs -f frontend
+
+# Reiniciar un servicio
+docker-compose restart backend
+
+# Detener todos los servicios
+docker-compose down
+
+# Detener y eliminar volúmenes (⚠️ borra la base de datos)
+docker-compose down -v
+
+# Reconstruir imágenes (después de cambios en código)
+docker-compose up -d --build
+
+# Ver estado de los contenedores
+docker-compose ps
+
+# Ejecutar comandos dentro de un contenedor
+docker-compose exec backend sh
+docker-compose exec mongo mongosh
+```

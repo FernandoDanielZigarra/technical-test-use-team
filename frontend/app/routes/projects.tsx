@@ -1,30 +1,35 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import type { LoaderFunctionArgs } from 'react-router';
-import { useGetProjectsQuery, useCreateProjectMutation } from '~/api/projectsApi';
-import { Plus, Users, Calendar } from 'lucide-react';
-import { requireAuth } from '~/middleware/auth';
+import { Plus, Trash2 } from 'lucide-react';
+import { useGetProjectsQuery, useCreateProjectMutation, useDeleteProjectMutation } from '~/api/projectsApi';
+import { requireAuth, getCurrentUserId } from '~/middleware/auth';
+import { useAuth } from '~/hooks/useAuth';
+import { Button, Input, Textarea, Title } from '~/components/common';
+import toast from 'react-hot-toast';
+import { CardProject } from '~/components/project-board';
 
-/**
- * Loader que protege la ruta con autenticación
- * Se ejecuta antes de renderizar el componente
- */
 export async function loader({ request }: LoaderFunctionArgs) {
   return requireAuth({ request });
 }
 
 export default function ProjectsPage() {
   const navigate = useNavigate();
-  const { data: projects, isLoading } = useGetProjectsQuery();
+  const { isAuthenticated } = useAuth();
+  const { data: projects = [], isLoading } = useGetProjectsQuery(undefined, {
+    skip: !isAuthenticated,
+  });
   const [createProject] = useCreateProjectMutation();
-  
+  const [deleteProject] = useDeleteProjectMutation();
+
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [isCreating, setIsCreating] = useState(false);
+  const [projectToDelete, setProjectToDelete] = useState<string | null>(null);
 
-  const handleCreateProject = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleCreateProject = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
     if (!name.trim()) return;
 
     setIsCreating(true);
@@ -33,142 +38,211 @@ export default function ProjectsPage() {
         name: name.trim(),
         description: description.trim() || undefined,
       }).unwrap();
-      
-      console.log('Project created:', newProject);
-      console.log('Navigating to:', `/project/${newProject.id}`);
-      
+
       setShowCreateModal(false);
       setName('');
       setDescription('');
       navigate(`/project/${newProject.id}`);
     } catch (error) {
       console.error('Error creating project:', error);
-      alert('Error al crear proyecto');
+      toast.error('Error al crear el proyecto');
     } finally {
       setIsCreating(false);
     }
   };
 
+  const handleDeleteProject = async (projectId: string) => {
+    try {
+      await deleteProject(projectId).unwrap();
+      toast.success('Proyecto eliminado exitosamente');
+      setProjectToDelete(null);
+    } catch (error) {
+      console.error('Error deleting project:', error);
+      toast.error('Error al eliminar el proyecto');
+    }
+  };
+
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+      <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
       </div>
     );
   }
 
+  const currentUserId = getCurrentUserId();
+
+  const ownedProjects = projects.filter((project) => project.ownerId === currentUserId);
+  const memberProjects = projects.filter((project) => project.ownerId !== currentUserId);
+
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex justify-between items-center mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Mis Proyectos</h1>
-          <button
+    <div className="h-screen bg-slate-200 dark:bg-slate-950 transition-colors pt-24">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 pb-10 pt-32">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-10">
+          <div>
+            <Title level={1}>Mis Proyectos</Title>
+            <p className="text-slate-600 dark:text-slate-400 mt-2 max-w-2xl">
+              Gestiona tus equipos y acompaña el progreso de cada iniciativa en un único lugar.
+            </p>
+          </div>
+          <Button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+            variant="primary"
+            className="inline-flex items-center gap-2"
           >
-            <Plus size={20} />
-            Nuevo Proyecto
-          </button>
+            <Plus size={18} />
+            Nuevo proyecto
+          </Button>
         </div>
 
-        {projects && projects.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {projects.map((project) => (
-              <div
-                key={project.id}
-                onClick={() => navigate(`/project/${project.id}`)}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md transition-shadow"
-              >
-                <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                  {project.name}
-                </h2>
-                {project.description && (
-                  <p className="text-gray-600 text-sm mb-4 line-clamp-2">
-                    {project.description}
-                  </p>
-                )}
-                <div className="flex items-center gap-4 text-sm text-gray-500">
-                  <div className="flex items-center gap-1">
-                    <Users size={16} />
-                    <span>{project.participants?.length || 0} miembros</span>
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <Calendar size={16} />
-                    <span>{new Date(project.createdAt).toLocaleDateString()}</span>
-                  </div>
+        {projects.length > 0 ? (
+          <div className="space-y-12">
+            {}
+            {ownedProjects.length > 0 && (
+              <div>
+                <Title level={2} className="mb-6">
+                  Proyectos donde eres propietario
+                </Title>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {ownedProjects.map((project) => (
+                    <CardProject
+                      key={project.id}
+                      project={project}
+                      isOwner={true}
+                      onNavigate={(id) => navigate(`/project/${id}`)}
+                      onDelete={(id) => setProjectToDelete(id)}
+                    />
+                  ))}
                 </div>
               </div>
-            ))}
+            )}
+
+            {}
+            {memberProjects.length > 0 && (
+              <div>
+                <Title level={2} className="mb-6">
+                  Proyectos donde eres miembro
+                </Title>
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+                  {memberProjects.map((project) => (
+                    <CardProject
+                      key={project.id}
+                      project={project}
+                      isOwner={false}
+                      onNavigate={(id) => navigate(`/project/${id}`)}
+                    />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-500 mb-4">No tienes proyectos todavía</p>
-            <button
+          <div className="rounded-2xl border border-dashed border-slate-300 bg-white/60 p-12 text-center text-slate-500 dark:border-slate-800 dark:bg-slate-900/60 dark:text-slate-400">
+            <p className="text-lg font-medium">Todavía no tienes proyectos.</p>
+            <p className="mt-2 text-sm">Crea el primero para empezar a colaborar con tu equipo.</p>
+            <Button
               onClick={() => setShowCreateModal(true)}
-              className="px-6 py-3 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              variant="primary"
+              className="mt-6 inline-flex items-center gap-2"
             >
-              Crear tu primer proyecto
-            </button>
+              <Plus size={16} />
+              Crear proyecto
+            </Button>
           </div>
         )}
       </div>
 
       {showCreateModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h2 className="text-xl font-bold mb-4">Nuevo Proyecto</h2>
-            <form onSubmit={handleCreateProject}>
-              <div className="mb-4">
-                <label htmlFor="project-name" className="block text-sm font-medium text-gray-700 mb-2">
-                  Nombre del proyecto *
-                </label>
-                <input
-                  id="project-name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Mi proyecto increíble"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  autoFocus
-                  required
-                />
-              </div>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 backdrop-blur-sm transition dark:bg-slate-950/70">
+          <div className="w-full max-w-md rounded-2xl border border-slate-200 bg-white p-6 shadow-xl transition dark:border-slate-800 dark:bg-slate-900">
+            <div className="mb-5">
+              <Title level={2} size="xl">Nuevo proyecto</Title>
+              <p className="text-sm text-slate-500 dark:text-slate-400">
+                Define un nombre y una descripción opcional para comenzar.
+              </p>
+            </div>
 
-              <div className="mb-4">
-                <label htmlFor="project-description" className="block text-sm font-medium text-gray-700 mb-2">
-                  Descripción
-                </label>
-                <textarea
-                  id="project-description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Descripción opcional"
-                  rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
+            <form onSubmit={handleCreateProject} className="space-y-5">
+              <Input
+                label="Nombre del proyecto"
+                type="text"
+                value={name}
+                onChange={(event) => setName(event.target.value)}
+                placeholder="Mi proyecto increíble"
+                autoFocus
+                required
+                fullWidth
+              />
 
-              <div className="flex justify-end gap-2">
-                <button
+              <Textarea
+                label="Descripción"
+                value={description}
+                onChange={(event) => setDescription(event.target.value)}
+                placeholder="Describe brevemente la idea o el objetivo"
+                rows={3}
+                fullWidth
+              />
+
+              <div className="flex items-center justify-end gap-3">
+                <Button
                   type="button"
                   onClick={() => {
                     setShowCreateModal(false);
                     setName('');
                     setDescription('');
                   }}
-                  className="px-4 py-2 text-gray-700 bg-gray-100 rounded-md hover:bg-gray-200"
+                  variant="secondary"
                 >
                   Cancelar
-                </button>
-                <button
+                </Button>
+                <Button
                   type="submit"
                   disabled={isCreating || !name.trim()}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  isLoading={isCreating}
+                  variant="primary"
                 >
-                  {isCreating ? 'Creando...' : 'Crear Proyecto'}
-                </button>
+                  Crear proyecto
+                </Button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {}
+      {projectToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-md w-full mx-4 shadow-2xl border border-slate-200 dark:border-slate-700">
+            <div className="flex items-start gap-4 mb-4">
+              <div className="flex items-center justify-center w-12 h-12 bg-red-100 dark:bg-red-900/30 rounded-full flex-shrink-0">
+                <Trash2 className="w-6 h-6 text-red-600 dark:text-red-400" />
+              </div>
+              <div>
+                <Title level={3} size="lg" className="mb-1">
+                  ¿Eliminar proyecto?
+                </Title>
+                <p className="text-sm text-slate-600 dark:text-slate-400">
+                  Esta acción no se puede deshacer. Se eliminarán todas las columnas, tareas y datos asociados.
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <Button
+                type="button"
+                onClick={() => setProjectToDelete(null)}
+                variant="secondary"
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="button"
+                onClick={() => handleDeleteProject(projectToDelete)}
+                className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white"
+              >
+                Eliminar
+              </Button>
+            </div>
           </div>
         </div>
       )}

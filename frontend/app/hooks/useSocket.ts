@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { socketService } from '~/services/socket.service';
 import {
@@ -19,6 +19,7 @@ import { projectsApi } from '~/api/projectsApi';
 export function useSocket(projectId: string | null) {
   const dispatch = useDispatch();
   const disconnectTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [removedFromProject, setRemovedFromProject] = useState<{ projectId: string; projectName: string } | null>(null);
 
   useEffect(() => {
     const token = localStorage.getItem('token');
@@ -29,11 +30,9 @@ export function useSocket(projectId: string | null) {
       disconnectTimeoutRef.current = null;
     }
 
-    // Connect socket
     socketService.connect(token);
     dispatch(setSocketConnected(true));
 
-    // Setup event listeners
     socketService.onProjectUpdated((project) => {
       dispatch(updateProject(project));
     });
@@ -60,7 +59,7 @@ export function useSocket(projectId: string | null) {
 
     socketService.onTaskMoved((data) => {
       dispatch(moveTaskBetweenColumns(data));
-      // Invalidate cache to refetch with correct order
+      
       dispatch(projectsApi.util.invalidateTags(['Task', 'Column']));
     });
 
@@ -76,7 +75,10 @@ export function useSocket(projectId: string | null) {
       dispatch(removeParticipant(participantId));
     });
 
-    // Cleanup
+    socketService.onUserRemovedFromProject((data) => {
+      setRemovedFromProject(data);
+    });
+
     return () => {
       socketService.off('project:updated');
       socketService.off('column:created');
@@ -88,6 +90,7 @@ export function useSocket(projectId: string | null) {
       socketService.off('task:deleted');
       socketService.off('participant:added');
       socketService.off('participant:removed');
+      socketService.off('user:removed-from-project');
       if (disconnectTimeoutRef.current) {
         clearTimeout(disconnectTimeoutRef.current);
       }
@@ -99,7 +102,6 @@ export function useSocket(projectId: string | null) {
     };
   }, [dispatch]);
 
-  // Join/leave project room
   useEffect(() => {
     if (projectId) {
       socketService.joinProject(projectId);
@@ -111,4 +113,6 @@ export function useSocket(projectId: string | null) {
       }
     };
   }, [projectId]);
+
+  return { removedFromProject, clearRemovedFromProject: () => setRemovedFromProject(null) };
 }

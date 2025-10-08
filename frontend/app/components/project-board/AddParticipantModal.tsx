@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useAddParticipantMutation } from '~/api/projectsApi';
 import { ParticipantRole } from '~/interfaces/projects';
-import { Modal, Button } from '~/components/common';
+import { Modal, Button, Input, Select } from '~/components/common';
 
 interface AddParticipantModalProps {
   readonly projectId: string;
@@ -22,13 +23,14 @@ export function AddParticipantModal({ projectId, onClose }: AddParticipantModalP
         projectId,
         data: { email: email.trim(), role },
       }).unwrap();
+      toast.success('Participante agregado exitosamente');
       onClose();
     } catch (error: any) {
       console.error('Error adding participant:', error);
       if (error?.data?.message) {
-        alert(error.data.message);
+        toast.error(error.data.message);
       } else {
-        alert('Error al agregar participante. Verifica que el email exista.');
+        toast.error('Error al agregar participante. Verifica que el email exista.');
       }
     }
   };
@@ -38,37 +40,29 @@ export function AddParticipantModal({ projectId, onClose }: AddParticipantModalP
       <form onSubmit={handleSubmit}>
         <Modal.Body>
           <div className="mb-4">
-            <label htmlFor="participant-email" className="block text-sm font-medium text-gray-700 mb-2">
-              Email del usuario *
-            </label>
-            <input
-              id="participant-email"
+            <Input
+              label="Email del usuario"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="usuario@example.com"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
               required
+              fullWidth
             />
           </div>
 
           <div className="mb-4">
-            <label htmlFor="participant-role" className="block text-sm font-medium text-gray-700 mb-2">
-              Rol
-            </label>
-            <select
-              id="participant-role"
+            <Select
+              label="Rol"
               value={role}
               onChange={(e) => setRole(e.target.value as ParticipantRole)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              helperText="Los propietarios pueden editar el proyecto y agregar/remover participantes"
+              fullWidth
             >
               <option value={ParticipantRole.MEMBER}>Miembro</option>
               <option value={ParticipantRole.OWNER}>Propietario</option>
-            </select>
-            <p className="text-xs text-gray-500 mt-1">
-              Los propietarios pueden editar el proyecto y agregar/remover participantes
-            </p>
+            </Select>
           </div>
         </Modal.Body>
 

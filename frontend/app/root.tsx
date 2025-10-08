@@ -13,6 +13,8 @@ import { Provider } from 'react-redux';
 import { AuthProvider } from "~/hooks/useAuth";
 import { store } from "~/store";
 import { Navbar } from "~/components/layout";
+import { ThemeProvider } from "~/hooks/useTheme";
+import { Toaster } from 'react-hot-toast';
 
 export const links: Route.LinksFunction = () => [
   { rel: "preconnect", href: "https://fonts.googleapis.com" },
@@ -29,14 +31,33 @@ export const links: Route.LinksFunction = () => [
 
 export function Layout({ children }: { readonly children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="es" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
         <Meta />
         <Links />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `
+              (function() {
+                try {
+                  const stored = localStorage.getItem('useTeam-theme');
+                  const theme = stored || (window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+                  if (theme === 'dark') {
+                    document.documentElement.classList.add('dark');
+                  } else {
+                    document.documentElement.classList.remove('dark');
+                  }
+                  document.documentElement.dataset.theme = theme;
+                  document.documentElement.style.colorScheme = theme;
+                } catch (e) {}
+              })();
+            `,
+          }}
+        />
       </head>
-      <body>
+      <body className="min-h-screen bg-slate-200 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
         {children}
         <ScrollRestoration />
         <Scripts />
@@ -48,14 +69,36 @@ export function Layout({ children }: { readonly children: React.ReactNode }) {
 export default function App() {
   return (
     <Provider store={store}>
-      <AuthProvider>
-        <div className="min-h-screen flex flex-col">
+      <ThemeProvider>
+        <AuthProvider>
+          <Toaster 
+            position="top-right"
+            toastOptions={{
+              duration: 4000,
+              style: {
+                background: '#363636',
+                color: '#fff',
+              },
+              success: {
+                duration: 3000,
+                iconTheme: {
+                  primary: '#22c55e',
+                  secondary: '#fff',
+                },
+              },
+              error: {
+                duration: 5000,
+                iconTheme: {
+                  primary: '#ef4444',
+                  secondary: '#fff',
+                },
+              },
+            }}
+          />
           <Navbar />
-          <main className="flex-1">
-            <Outlet />
-          </main>
-        </div>
-      </AuthProvider>
+          <Outlet />
+        </AuthProvider>
+      </ThemeProvider>
     </Provider>
   );
 }

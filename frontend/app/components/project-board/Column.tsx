@@ -36,17 +36,17 @@ export function Column({ column, participants }: Readonly<ColumnProps>) {
 
   return (
     <>
-      <div className="bg-gray-50 rounded-lg p-3 w-80 flex-shrink-0">
-        <div className="flex justify-between items-center mb-3">
-          <h3 className="font-semibold text-gray-900 flex items-center gap-2">
+      <div className="bg-slate-50 dark:bg-slate-800 rounded-lg p-3 w-80 flex-shrink-0 flex flex-col h-full">
+        <div className="flex justify-between items-center mb-3 flex-shrink-0">
+          <h3 className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-2">
             {column.title}
-            <span className="bg-gray-200 text-gray-700 text-xs px-2 py-0.5 rounded-full">
+            <span className="bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-300 text-xs px-2 py-0.5 rounded-full">
               {column.tasks.length}
             </span>
           </h3>
           <button
             onClick={handleDeleteColumn}
-            className="text-gray-400 hover:text-red-600"
+            className="text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400"
             title="Eliminar columna"
           >
             <Trash2 size={16} />
@@ -58,8 +58,8 @@ export function Column({ column, participants }: Readonly<ColumnProps>) {
             <div
               ref={provided.innerRef}
               {...provided.droppableProps}
-              className={`min-h-[200px] transition-colors ${
-                snapshot.isDraggingOver ? 'bg-blue-50' : ''
+              className={`flex-1 overflow-y-auto min-h-[200px] transition-colors ${
+                snapshot.isDraggingOver ? 'bg-blue-50 dark:bg-blue-950/50' : ''
               }`}
             >
               {column.tasks.map((task, index) => (
@@ -72,7 +72,7 @@ export function Column({ column, participants }: Readonly<ColumnProps>) {
 
         <button
           onClick={() => setShowTaskModal(true)}
-          className="w-full mt-2 flex items-center justify-center gap-2 px-3 py-2 text-sm text-gray-600 hover:bg-gray-200 rounded-md transition-colors"
+          className="w-full mt-2 flex items-center justify-center gap-2 px-3 py-2 text-sm text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-md transition-colors flex-shrink-0"
         >
           <Plus size={16} />
           Agregar tarea

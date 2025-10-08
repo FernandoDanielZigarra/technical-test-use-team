@@ -1,5 +1,8 @@
 import { useState, useEffect, createContext, useContext, useMemo } from "react";
+import { useDispatch } from "react-redux";
 import { clearAuthTokenStorage, getAuthToken, persistAuthToken } from "~/middleware/auth";
+import { projectsApi } from "~/api/projectsApi";
+import { authApi } from "~/api/authApi";
 
 interface AuthContextType {
   readonly isAuthenticated: boolean;
@@ -12,6 +15,7 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: { readonly children: React.ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
+  const dispatch = useDispatch();
 
   useEffect(() => {
     const storedToken = getAuthToken();
@@ -28,6 +32,9 @@ export function AuthProvider({ children }: { readonly children: React.ReactNode 
   const logout = () => {
     clearAuthTokenStorage();
     setToken(null);
+    
+    dispatch(projectsApi.util.resetApiState());
+    dispatch(authApi.util.resetApiState());
   };
 
   const value = useMemo<AuthContextType>(() => ({
@@ -35,7 +42,7 @@ export function AuthProvider({ children }: { readonly children: React.ReactNode 
     token,
     login,
     logout,
-  }), [token]);
+  }), [token, logout]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }

@@ -2,17 +2,23 @@ import type { ButtonHTMLAttributes, ReactNode } from 'react';
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
   readonly children: ReactNode;
-  readonly variant?: 'primary' | 'secondary' | 'danger' | 'ghost';
+  readonly variant?: 'primary' | 'secondary' | 'danger' | 'ghost' | 'success';
   readonly size?: 'sm' | 'md' | 'lg';
   readonly fullWidth?: boolean;
   readonly isLoading?: boolean;
 }
 
 const variantClasses = {
-  primary: 'bg-blue-500 text-white hover:bg-blue-600 active:bg-blue-700',
-  secondary: 'bg-gray-200 text-gray-800 hover:bg-gray-300 active:bg-gray-400',
-  danger: 'bg-red-500 text-white hover:bg-red-600 active:bg-red-700',
-  ghost: 'bg-transparent text-gray-700 hover:bg-gray-100 active:bg-gray-200',
+  primary:
+    'bg-blue-600 text-white hover:bg-blue-700 active:bg-blue-800 dark:bg-blue-500 dark:hover:bg-blue-400 dark:active:bg-blue-300',
+  secondary:
+    'bg-slate-200 text-slate-800 hover:bg-slate-300 active:bg-slate-400 dark:bg-slate-700 dark:text-slate-100 dark:hover:bg-slate-600 dark:active:bg-slate-500',
+  danger:
+    'bg-red-500 text-white hover:bg-red-600 active:bg-red-700 dark:bg-red-500 dark:hover:bg-red-400 dark:active:bg-red-300',
+  success:
+    'bg-green-600 text-white hover:bg-green-700 active:bg-green-800 dark:bg-green-500 dark:hover:bg-green-400 dark:active:bg-green-300',
+  ghost:
+    'bg-transparent text-slate-700 hover:bg-slate-100 active:bg-slate-200 dark:text-slate-200 dark:hover:bg-slate-800 dark:active:bg-slate-700',
 };
 
 const sizeClasses = {
@@ -31,7 +37,7 @@ export function Button({
   className = '',
   ...props
 }: ButtonProps) {
-  const baseClasses = 'font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseClasses = 'font-medium rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-blue-500 dark:focus-visible:ring-offset-slate-900';
   const widthClass = fullWidth ? 'w-full' : '';
   const variantClass = variantClasses[variant];
   const sizeClass = sizeClasses[size];

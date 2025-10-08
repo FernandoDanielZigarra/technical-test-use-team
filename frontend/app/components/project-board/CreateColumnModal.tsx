@@ -1,6 +1,7 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useCreateColumnMutation } from '~/api/projectsApi';
-import { Modal, Button } from '~/components/common';
+import { Modal, Button, Input } from '~/components/common';
 
 interface CreateColumnModalProps {
   readonly projectId: string;
@@ -17,10 +18,11 @@ export function CreateColumnModal({ projectId, onClose }: CreateColumnModalProps
 
     try {
       await createColumn({ title: title.trim(), projectId }).unwrap();
+      toast.success('Columna creada exitosamente');
       onClose();
     } catch (error) {
       console.error('Error creating column:', error);
-      alert('Error al crear columna');
+      toast.error('Error al crear columna');
     }
   };
 
@@ -28,21 +30,16 @@ export function CreateColumnModal({ projectId, onClose }: CreateColumnModalProps
     <Modal isOpen={true} onClose={onClose} title="Nueva Columna">
       <form onSubmit={handleSubmit}>
         <Modal.Body>
-          <div className="mb-4">
-            <label htmlFor="column-title" className="block text-sm font-medium text-gray-700 mb-2">
-              Nombre de la columna
-            </label>
-            <input
-              id="column-title"
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ej: Por hacer, En progreso, Completado"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
-              autoFocus
-              required
-            />
-          </div>
+          <Input
+            label="Nombre de la columna"
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Ej: Por hacer, En progreso, Completado"
+            autoFocus
+            required
+            fullWidth
+          />
         </Modal.Body>
 
         <Modal.Footer>

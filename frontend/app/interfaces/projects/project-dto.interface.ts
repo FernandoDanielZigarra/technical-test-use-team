@@ -23,13 +23,13 @@ export interface UpdateColumnDto {
 export interface CreateTaskDto {
   readonly title: string;
   readonly description?: string;
-  readonly assigneeId?: number;
+  readonly assigneeId?: string | null;
 }
 
 export interface UpdateTaskDto {
   readonly title?: string;
   readonly description?: string;
-  readonly assigneeId?: number;
+  readonly assigneeId?: string | null;
 }
 
 export interface MoveTaskDto {

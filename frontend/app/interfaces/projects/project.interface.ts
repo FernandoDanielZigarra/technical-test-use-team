@@ -6,7 +6,7 @@ export interface Project {
   readonly id: string;
   readonly name: string;
   readonly description?: string;
-  readonly ownerId: number;
+  readonly ownerId: string;
   readonly owner: User;
   readonly participants: ProjectParticipant[];
   readonly columns: Column[];

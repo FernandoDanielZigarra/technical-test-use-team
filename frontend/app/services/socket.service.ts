@@ -111,7 +111,10 @@ class SocketService {
     this.socket?.on('participant:removed', callback);
   }
 
-  // Remove event listeners
+  onUserRemovedFromProject(callback: (data: { projectId: string; projectName: string }) => void) {
+    this.socket?.on('user:removed-from-project', callback);
+  }
+
   off(event: string, callback?: (...args: any[]) => void) {
     if (callback) {
       this.socket?.off(event, callback);

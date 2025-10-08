@@ -1,4 +1,4 @@
-// API Configuration Constants
+
 export const API_CONFIG = {
   BASE_URL: import.meta.env.VITE_API_URL || 'http://localhost:3000',
   SOCKET_URL: import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000',
@@ -6,15 +6,13 @@ export const API_CONFIG = {
   RETRY_ATTEMPTS: 3,
 } as const;
 
-// UI Configuration Constants
 export const UI_CONFIG = {
   DEBOUNCE_DELAY: 300,
   TOAST_DURATION: 3000,
   MODAL_ANIMATION_DURATION: 200,
-  MAX_FILE_SIZE: 5 * 1024 * 1024, // 5MB
+  MAX_FILE_SIZE: 5 * 1024 * 1024, 
 } as const;
 
-// Feature Flags
 export const FEATURES = {
   ENABLE_NOTIFICATIONS: true,
   ENABLE_DARK_MODE: false,

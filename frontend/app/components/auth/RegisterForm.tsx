@@ -1,5 +1,4 @@
-// 🎯 Nivel 3: High-Level RegisterForm (Convenience Component)
-// Wrapper conveniente que usa AuthForm internamente
+
 
 import { useNavigate } from "react-router";
 import { useAuth } from "~/hooks/useAuth";

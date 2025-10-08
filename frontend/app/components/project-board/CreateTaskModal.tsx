@@ -1,7 +1,8 @@
 import { useState } from 'react';
+import toast from 'react-hot-toast';
 import { useCreateTaskMutation } from '~/api/projectsApi';
 import type { User } from '~/interfaces/projects';
-import { Modal, Button } from '~/components/common';
+import { Modal, Button, Input, Textarea, Select } from '~/components/common';
 
 interface CreateTaskModalProps {
   readonly columnId: string;
@@ -12,7 +13,7 @@ interface CreateTaskModalProps {
 export function CreateTaskModal({ columnId, participants, onClose }: CreateTaskModalProps) {
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
-  const [assigneeId, setAssigneeId] = useState<number | ''>('');
+  const [assigneeId, setAssigneeId] = useState<string>('');
   const [createTask, { isLoading }] = useCreateTaskMutation();
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -25,13 +26,14 @@ export function CreateTaskModal({ columnId, participants, onClose }: CreateTaskM
         data: {
           title: title.trim(),
           description: description.trim() || undefined,
-          assigneeId: assigneeId !== '' ? Number(assigneeId) : undefined,
+          assigneeId: assigneeId !== '' ? assigneeId : null,
         },
       }).unwrap();
+      toast.success('Tarea creada exitosamente');
       onClose();
     } catch (error) {
       console.error('Error creating task:', error);
-      alert('Error al crear tarea');
+      toast.error('Error al crear tarea');
     }
   };
 
@@ -40,46 +42,35 @@ export function CreateTaskModal({ columnId, participants, onClose }: CreateTaskM
       <form onSubmit={handleSubmit}>
         <Modal.Body>
           <div className="mb-4">
-            <label htmlFor="task-title" className="block text-sm font-medium text-gray-700 mb-2">
-              Título *
-            </label>
-            <input
-              id="task-title"
+            <Input
+              label="Título"
               type="text"
               value={title}
               onChange={(e) => setTitle(e.target.value)}
               placeholder="Título de la tarea"
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
               autoFocus
               required
+              fullWidth
             />
           </div>
 
           <div className="mb-4">
-            <label htmlFor="task-description" className="block text-sm font-medium text-gray-700 mb-2">
-              Descripción
-            </label>
-            <textarea
-              id="task-description"
+            <Textarea
+              label="Descripción"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Descripción opcional"
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              fullWidth
             />
           </div>
 
           <div className="mb-4">
-            <label htmlFor="task-assignee" className="block text-sm font-medium text-gray-700 mb-2">
-              Asignar a
-            </label>
-            <select
-              id="task-assignee"
+            <Select
+              label="Asignar a"
               value={assigneeId}
-              onChange={(e) =>
-                setAssigneeId(e.target.value === '' ? '' : Number(e.target.value))
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              onChange={(e) => setAssigneeId(e.target.value)}
+              fullWidth
             >
               <option value="">Sin asignar</option>
               {participants.map((user) => (
@@ -87,7 +78,7 @@ export function CreateTaskModal({ columnId, participants, onClose }: CreateTaskM
                   {user.name} ({user.email})
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         </Modal.Body>
 

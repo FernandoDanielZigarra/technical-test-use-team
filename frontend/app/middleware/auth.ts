@@ -82,9 +82,6 @@ export function clearAuthTokenStorage(): void {
   setTokenCookie(null);
 }
 
-/**
- * Middleware de autenticación para proteger rutas
- */
 export async function requireAuth(options?: AuthOptions) {
   const token = getToken(options);
 
@@ -95,9 +92,6 @@ export async function requireAuth(options?: AuthOptions) {
   return { token };
 }
 
-/**
- * Middleware para rutas públicas (login/register)
- */
 export async function redirectIfAuthenticated(options?: AuthOptions) {
   const token = getToken(options);
 
@@ -110,4 +104,45 @@ export async function redirectIfAuthenticated(options?: AuthOptions) {
 
 export function getAuthToken(options?: AuthOptions): string | null {
   return getToken(options);
+}
+
+export function decodeJWT(token: string): any {
+  try {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const jsonPayload = decodeURIComponent(
+      atob(base64)
+        .split('')
+        .map((c) => '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2))
+        .join(''),
+    );
+    return JSON.parse(jsonPayload);
+  } catch (error) {
+    console.error('Error decoding JWT:', error);
+    return null;
+  }
+}
+
+export function getCurrentUserId(): string | null {
+  const token = getAuthToken();
+  if (!token) return null;
+  
+  const payload = decodeJWT(token);
+  return payload?.sub || payload?.id || null;
+}
+
+export function getCurrentUser(): { id: string; email: string; name: string } | null {
+  const token = getAuthToken();
+  if (!token) return null;
+  
+  const payload = decodeJWT(token);
+  const userId = payload?.sub || payload?.id;
+  
+  if (!userId || !payload?.email || !payload?.name) return null;
+  
+  return {
+    id: userId,
+    email: payload.email,
+    name: payload.name,
+  };
 }

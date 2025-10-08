@@ -1,98 +1,243 @@
-<p align="center">
-  <a href="http://nestjs.com/" target="blank"><img src="https://nestjs.com/img/logo-small.svg" width="120" alt="Nest Logo" /></a>
-</p>
+# 🎯 Backend - Kanban Board API
 
-[circleci-image]: https://img.shields.io/circleci/build/github/nestjs/nest/master?token=abc123def456
-[circleci-url]: https://circleci.com/gh/nestjs/nest
+## 📝 Descripción del Proyecto
 
-  <p align="center">A progressive <a href="http://nodejs.org" target="_blank">Node.js</a> framework for building efficient and scalable server-side applications.</p>
-    <p align="center">
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/v/@nestjs/core.svg" alt="NPM Version" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/l/@nestjs/core.svg" alt="Package License" /></a>
-<a href="https://www.npmjs.com/~nestjscore" target="_blank"><img src="https://img.shields.io/npm/dm/@nestjs/common.svg" alt="NPM Downloads" /></a>
-<a href="https://circleci.com/gh/nestjs/nest" target="_blank"><img src="https://img.shields.io/circleci/build/github/nestjs/nest/master" alt="CircleCI" /></a>
-<a href="https://discord.gg/G7Qnnhy" target="_blank"><img src="https://img.shields.io/badge/discord-online-brightgreen.svg" alt="Discord"/></a>
-<a href="https://opencollective.com/nest#backer" target="_blank"><img src="https://opencollective.com/nest/backers/badge.svg" alt="Backers on Open Collective" /></a>
-<a href="https://opencollective.com/nest#sponsor" target="_blank"><img src="https://opencollective.com/nest/sponsors/badge.svg" alt="Sponsors on Open Collective" /></a>
-  <a href="https://paypal.me/kamilmysliwiec" target="_blank"><img src="https://img.shields.io/badge/Donate-PayPal-ff3f59.svg" alt="Donate us"/></a>
-    <a href="https://opencollective.com/nest#sponsor"  target="_blank"><img src="https://img.shields.io/badge/Support%20us-Open%20Collective-41B883.svg" alt="Support us"></a>
-  <a href="https://twitter.com/nestframework" target="_blank"><img src="https://img.shields.io/twitter/follow/nestframework.svg?style=social&label=Follow" alt="Follow us on Twitter"></a>
-</p>
-  <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
-  [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
+API RESTful construida con **NestJS** para gestionar un tablero Kanban colaborativo en tiempo real. Proporciona endpoints para autenticación, gestión de proyectos, columnas y tareas, además de comunicación en tiempo real mediante WebSockets.
 
-## Description
+### Características Principales
 
-[Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
+- 🔐 **Autenticación JWT** - Sistema seguro de login y registro
+- 🗂️ **CRUD Completo** - Proyectos, columnas y tareas
+- ⚡ **WebSockets** - Sincronización en tiempo real entre usuarios
+- 📊 **Prisma ORM** - Abstracción elegante de base de datos
+- 🏗️ **Arquitectura Modular** - Separación por features (auth, projects, tasks, etc.)
+- 🔄 **MongoDB Replica Set** - Soporte para transacciones ACID
+- 📤 **Integración N8N** - Webhooks para exportación automatizada
 
-## Project setup
+## 🛠️ Stack Tecnológico
 
-```bash
-$ pnpm install
+| Tecnología | Versión | Propósito |
+|------------|---------|-----------|
+| **NestJS** | 11.x | Framework principal |
+| **Prisma** | 6.x | ORM para MongoDB |
+| **Socket.io** | 4.x | WebSockets en tiempo real |
+| **MongoDB** | 7.0 | Base de datos NoSQL |
+| **JWT** | - | Autenticación segura |
+| **TypeScript** | 5.x | Type safety |
+
+## 📁 Estructura del Proyecto
+
+```
+src/
+├── features/          # Módulos por funcionalidad
+│   ├── auth/         # Autenticación y autorización
+│   ├── projects/     # Gestión de proyectos
+│   ├── columns/      # Gestión de columnas
+│   ├── tasks/        # Gestión de tareas
+│   ├── users/        # Gestión de usuarios
+│   └── socket/       # Gateway de WebSockets
+├── core/             # Servicios centrales
+│   └── prisma/       # Configuración de Prisma
+├── shared/           # Utilidades compartidas
+│   └── utils/        # Helpers (JWT, passwords, etc.)
+└── common/           # Tipos y constantes
+    └── types/        # Interfaces TypeScript
 ```
 
-## Compile and run the project
+## ⚙️ Datos a Considerar
+
+### 🔑 Variables de Entorno Requeridas
+
+Crea un archivo `.env` en la raíz del backend (usa `.env.example` como template):
 
 ```bash
-# development
-$ pnpm run start
+# Database
+DATABASE_URL="mongodb://root:example@localhost:27017/kanban-board?authSource=admin&replicaSet=rs0"
+MONGODB_URI="mongodb://root:example@localhost:27017/kanban-board?authSource=admin&replicaSet=rs0"
 
-# watch mode
-$ pnpm run start:dev
+# JWT
+JWT_SECRET="your-super-secret-jwt-key-change-me-in-production"
 
-# production mode
-$ pnpm run start:prod
+# Server
+PORT=3000
+NODE_ENV=development
 ```
 
-## Run tests
+> ⚠️ **Importante**: 
+> - Para desarrollo con Docker, reemplaza `localhost` por `mongo` en las URLs de la base de datos
+> - El JWT_SECRET debe ser una cadena aleatoria fuerte en producción
+> - MongoDB debe estar configurado como Replica Set para que Prisma pueda usar transacciones
+
+### 🗄️ Base de Datos
+
+El backend utiliza **MongoDB con Replica Set** configurado. Esto es **obligatorio** porque:
+
+1. Prisma requiere Replica Set para usar transacciones (`$transaction`)
+2. Las operaciones en `tasks.service.ts` y `columns.service.ts` usan transacciones
+3. Sin Replica Set, la aplicación fallará al intentar operaciones transaccionales
+
+### 🔌 Endpoints Principales
+
+```
+POST   /auth/register          # Registrar nuevo usuario
+POST   /auth/login             # Iniciar sesión
+GET    /projects               # Listar proyectos del usuario
+POST   /projects               # Crear nuevo proyecto
+GET    /projects/:id           # Obtener proyecto específico
+POST   /columns                # Crear columna
+PATCH  /columns/:id            # Actualizar columna
+DELETE /columns/:id            # Eliminar columna
+POST   /tasks                  # Crear tarea
+PATCH  /tasks/:id              # Actualizar tarea
+DELETE /tasks/:id              # Eliminar tarea
+POST   /tasks/export           # Exportar tareas a CSV (vía N8N)
+```
+
+### 🔄 WebSocket Events
+
+```typescript
+// Client → Server
+'joinProject'          # Unirse a sala de proyecto
+'leaveProject'         # Salir de sala de proyecto
+
+// Server → Client
+'taskCreated'          # Nueva tarea creada
+'taskUpdated'          # Tarea actualizada
+'taskDeleted'          # Tarea eliminada
+'columnCreated'        # Nueva columna creada
+'columnUpdated'        # Columna actualizada
+'columnDeleted'        # Columna eliminada
+```
+
+## 🚀 Instalación y Ejecución
+
+### Opción 1: Con Docker (Recomendado)
 
 ```bash
-# unit tests
-$ pnpm run test
+# Desde la raíz del proyecto
+docker-compose up -d
 
-# e2e tests
-$ pnpm run test:e2e
-
-# test coverage
-$ pnpm run test:cov
+# El backend estará disponible en http://localhost:3000
 ```
 
-## Deployment
+### Opción 2: Desarrollo Local
 
-When you're ready to deploy your NestJS application to production, there are some key steps you can take to ensure it runs as efficiently as possible. Check out the [deployment documentation](https://docs.nestjs.com/deployment) for more information.
+#### Prerequisitos
 
-If you are looking for a cloud-based platform to deploy your NestJS application, check out [Mau](https://mau.nestjs.com), our official platform for deploying NestJS applications on AWS. Mau makes deployment straightforward and fast, requiring just a few simple steps:
+- Node.js 18+ y pnpm
+- MongoDB 7.0+ configurado como Replica Set
+- OpenSSL (para generar keyfile de MongoDB)
+
+#### Pasos
+
+1. **Instalar dependencias**
 
 ```bash
-$ pnpm install -g @nestjs/mau
-$ mau deploy
+pnpm install
 ```
 
-With Mau, you can deploy your application in just a few clicks, allowing you to focus on building features rather than managing infrastructure.
+2. **Configurar variables de entorno**
 
-## Resources
+```bash
+cp .env.example .env
+# Edita .env con tus valores
+```
 
-Check out a few resources that may come in handy when working with NestJS:
+3. **Generar Prisma Client**
 
-- Visit the [NestJS Documentation](https://docs.nestjs.com) to learn more about the framework.
-- For questions and support, please visit our [Discord channel](https://discord.gg/G7Qnnhy).
-- To dive deeper and get more hands-on experience, check out our official video [courses](https://courses.nestjs.com/).
-- Deploy your application to AWS with the help of [NestJS Mau](https://mau.nestjs.com) in just a few clicks.
-- Visualize your application graph and interact with the NestJS application in real-time using [NestJS Devtools](https://devtools.nestjs.com).
-- Need help with your project (part-time to full-time)? Check out our official [enterprise support](https://enterprise.nestjs.com).
-- To stay in the loop and get updates, follow us on [X](https://x.com/nestframework) and [LinkedIn](https://linkedin.com/company/nestjs).
-- Looking for a job, or have a job to offer? Check out our official [Jobs board](https://jobs.nestjs.com).
+```bash
+pnpm prisma generate
+```
 
-## Support
+4. **Ejecutar migraciones** (si es necesario)
 
-Nest is an MIT-licensed open source project. It can grow thanks to the sponsors and support by the amazing backers. If you'd like to join them, please [read more here](https://docs.nestjs.com/support).
+```bash
+pnpm prisma db push
+```
 
-## Stay in touch
+5. **Iniciar en modo desarrollo**
 
-- Author - [Kamil Myśliwiec](https://twitter.com/kammysliwiec)
-- Website - [https://nestjs.com](https://nestjs.com/)
-- Twitter - [@nestframework](https://twitter.com/nestframework)
+```bash
+pnpm run start:dev
+```
 
-## License
+## 📜 Scripts Disponibles
 
-Nest is [MIT licensed](https://github.com/nestjs/nest/blob/master/LICENSE).
+```bash
+# Desarrollo
+pnpm run start:dev          # Modo watch con hot-reload
+pnpm run start              # Modo normal
+pnpm run start:prod         # Modo producción
+
+# Build
+pnpm run build              # Compilar TypeScript
+
+# Testing
+pnpm run test               # Unit tests
+pnpm run test:e2e           # E2E tests
+pnpm run test:cov           # Test coverage
+
+# Prisma
+pnpm prisma generate        # Generar Prisma Client
+pnpm prisma db push         # Sincronizar schema con DB
+pnpm prisma studio          # Abrir Prisma Studio (GUI)
+
+# Linting
+pnpm run lint               # Ejecutar ESLint
+pnpm run format             # Formatear código con Prettier
+```
+
+## 🧪 Testing
+
+```bash
+# Unit tests
+pnpm run test
+
+# E2E tests
+pnpm run test:e2e
+
+# Test coverage
+pnpm run test:cov
+```
+
+## 📚 Recursos y Documentación
+
+- [NestJS Documentation](https://docs.nestjs.com)
+- [Prisma Documentation](https://www.prisma.io/docs)
+- [Socket.io Documentation](https://socket.io/docs/v4/)
+- [MongoDB Documentation](https://docs.mongodb.com)
+
+## 🔧 Troubleshooting
+
+### Error: "Transactions are not supported by this deployment"
+
+**Causa:** MongoDB no está configurado como Replica Set.
+
+**Solución:** Asegúrate de que MongoDB esté corriendo con Replica Set. Si usas Docker Compose (recomendado), esto ya está configurado.
+
+### Error: "PrismaClient is unable to connect to the database"
+
+**Causa:** URL de conexión incorrecta o MongoDB no está corriendo.
+
+**Solución:**
+1. Verifica que MongoDB esté corriendo: `docker ps` o `mongosh`
+2. Revisa la variable `DATABASE_URL` en `.env`
+3. Para Docker, usa `mongo` como host; para local, usa `localhost`
+
+### Puerto 3000 ya en uso
+
+**Solución:**
+```bash
+# Encuentra el proceso
+lsof -ti:3000
+
+# Mata el proceso
+kill -9 <PID>
+
+# O cambia el puerto en .env
+PORT=3001
+```
+
+---
+
+**Built with ❤️ using NestJS**
