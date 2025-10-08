@@ -1,5 +1,5 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { getAuthToken } from '~/middleware/auth';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { baseQueryWithTokenHandling } from '~/api/baseQuery';
 import type {
   Project,
   CreateProjectDto,
@@ -17,16 +17,7 @@ import type {
 
 export const projectsApi = createApi({
   reducerPath: 'projectsApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: 'http://localhost:3000',
-    prepareHeaders: (headers) => {
-      const token = getAuthToken();
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithTokenHandling,
   tagTypes: ['Project', 'Column', 'Task', 'Participant'],
   endpoints: (builder) => ({
     

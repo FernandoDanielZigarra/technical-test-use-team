@@ -5,7 +5,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import { useGetProjectsQuery, useCreateProjectMutation, useDeleteProjectMutation } from '~/api/projectsApi';
 import { requireAuth, getCurrentUserId } from '~/middleware/auth';
 import { useAuth } from '~/hooks/useAuth';
-import { Button, Input, Textarea, Title } from '~/components/common';
+import { Button, Input, Textarea, Title, Loading } from '~/components/common';
 import toast from 'react-hot-toast';
 import { CardProject } from '~/components/project-board';
 
@@ -63,11 +63,7 @@ export default function ProjectsPage() {
   };
 
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950">
-        <div className="h-12 w-12 animate-spin rounded-full border-4 border-blue-500 border-t-transparent" />
-      </div>
-    );
+    return <Loading message="Cargando proyectos..." fullScreen />;
   }
 
   const currentUserId = getCurrentUserId();

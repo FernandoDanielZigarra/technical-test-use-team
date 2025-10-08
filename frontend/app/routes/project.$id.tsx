@@ -7,7 +7,7 @@ import { setCurrentProject, clearCurrentProject } from '~/store/slices/projectSl
 import { useSocket } from '~/hooks/useSocket';
 import { ProjectBoard } from '~/components/project-board';
 import { requireAuth } from '~/middleware/auth';
-import { Button, Title } from '~/components/common';
+import { Button, Title, Loading } from '~/components/common';
 import { UserX } from 'lucide-react';
 
 export async function loader({ request }: LoaderFunctionArgs) {
@@ -62,14 +62,7 @@ export default function ProjectPage() {
   }
 
   if (isLoading) {
-    return (
-      <div className="h-screen flex items-center justify-center bg-slate-100 dark:bg-slate-950">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 dark:border-blue-500 mx-auto mb-4"></div>
-          <p className="text-slate-600 dark:text-slate-400">Cargando proyecto...</p>
-        </div>
-      </div>
-    );
+    return <Loading message="Cargando proyecto..." fullScreen />;
   }
 
   if (error) {

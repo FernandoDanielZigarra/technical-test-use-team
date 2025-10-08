@@ -1,18 +1,20 @@
 import { useState, useRef, useEffect } from 'react';
-import { User, Mail, LogOut, FolderKanban } from 'lucide-react';
+import { User, Mail, Trash2, FolderKanban, LogOut } from 'lucide-react';
 import { useNavigate } from 'react-router';
 import { useAuth } from '~/hooks/useAuth';
-import { useGetCurrentUserQuery } from '~/api/userApi';
-import { Modal, Button } from '~/components/common';
+import { useGetCurrentUserQuery, useDeleteAccountMutation } from '~/api/userApi';
+import { Modal, Button, ConfirmModal } from '~/components/common';
 
 export function UserMenu() {
   const navigate = useNavigate();
   const { logout } = useAuth();
   const [showDropdown, setShowDropdown] = useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   const { data: user, isLoading } = useGetCurrentUserQuery();
+  const [deleteAccount, { isLoading: isDeleting }] = useDeleteAccountMutation();
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -44,6 +46,16 @@ export function UserMenu() {
   const handleOpenProfile = () => {
     setShowDropdown(false);
     setShowModal(true);
+  };
+
+  const handleDeleteAccount = async () => {
+    try {
+      await deleteAccount().unwrap();
+      logout();
+      navigate('/');
+    } catch (error) {
+      console.error('Error deleting account:', error);
+    }
   };
 
   const initials = user
@@ -194,14 +206,12 @@ export function UserMenu() {
               </Button>
               <Button
                 type="button"
-                onClick={() => {
-                  setShowModal(false);
-                  handleLogout();
-                }}
+                onClick={() => setShowDeleteConfirm(true)}
                 className="bg-red-600 hover:bg-red-700 dark:bg-red-600 dark:hover:bg-red-700 text-white flex items-center gap-2"
+                disabled={isDeleting}
               >
-                <LogOut className="w-4 h-4" />
-                Cerrar sesión
+                <Trash2 className="w-4 h-4" />
+                {isDeleting ? 'Eliminando...' : 'Eliminar cuenta'}
               </Button>
             </Modal.Footer>
           </>
@@ -213,6 +223,17 @@ export function UserMenu() {
           </Modal.Body>
         )}
       </Modal>
+
+      <ConfirmModal
+        isOpen={showDeleteConfirm}
+        onClose={() => setShowDeleteConfirm(false)}
+        onConfirm={handleDeleteAccount}
+        title="Eliminar cuenta"
+        message={`¿Estás seguro de que deseas eliminar tu cuenta?\n\nEsta acción eliminará:\n• Tu perfil de usuario\n• Todos tus proyectos donde seas el único participante\n• Todas las tareas asignadas a ti\n\nEsta acción no se puede deshacer.`}
+        confirmText="Eliminar cuenta"
+        cancelText="Cancelar"
+        variant="danger"
+      />
     </>
   );
 }

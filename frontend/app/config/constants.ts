@@ -18,3 +18,7 @@ export const FEATURES = {
   ENABLE_DARK_MODE: false,
   ENABLE_ANALYTICS: false,
 } as const;
+
+export const AUTH_EVENTS = {
+  TOKEN_EXPIRED: 'auth:token-expired',
+} as const;

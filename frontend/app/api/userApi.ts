@@ -1,5 +1,5 @@
-import { createApi, fetchBaseQuery } from '@reduxjs/toolkit/query/react';
-import { getAuthToken } from '~/middleware/auth';
+import { createApi } from '@reduxjs/toolkit/query/react';
+import { baseQueryWithTokenHandling } from '~/api/baseQuery';
 
 export interface User {
   id: string;
@@ -11,23 +11,21 @@ export interface User {
 
 export const userApi = createApi({
   reducerPath: 'userApi',
-  baseQuery: fetchBaseQuery({
-    baseUrl: 'http://localhost:3000',
-    prepareHeaders: (headers) => {
-      const token = getAuthToken();
-      if (token) {
-        headers.set('Authorization', `Bearer ${token}`);
-      }
-      return headers;
-    },
-  }),
+  baseQuery: baseQueryWithTokenHandling,
   tagTypes: ['User'],
   endpoints: (builder) => ({
     getCurrentUser: builder.query<User, void>({
       query: () => '/users/me',
       providesTags: ['User'],
     }),
+    deleteAccount: builder.mutation<{ message: string }, void>({
+      query: () => ({
+        url: '/users/me',
+        method: 'DELETE',
+      }),
+      invalidatesTags: ['User'],
+    }),
   }),
 });
 
-export const { useGetCurrentUserQuery } = userApi;
+export const { useGetCurrentUserQuery, useDeleteAccountMutation } = userApi;

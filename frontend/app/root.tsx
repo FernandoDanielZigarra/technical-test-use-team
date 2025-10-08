@@ -13,6 +13,7 @@ import { Provider } from 'react-redux';
 import { AuthProvider } from "~/hooks/useAuth";
 import { store } from "~/store";
 import { Navbar } from "~/components/layout";
+import { TokenExpiredModal } from "~/components/auth";
 import { ThemeProvider } from "~/hooks/useTheme";
 import { Toaster } from 'react-hot-toast';
 
@@ -95,6 +96,7 @@ export default function App() {
               },
             }}
           />
+          <TokenExpiredModal />
           <Navbar />
           <Outlet />
         </AuthProvider>

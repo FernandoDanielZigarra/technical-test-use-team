@@ -4,6 +4,7 @@ import { Plus, Trash2 } from 'lucide-react';
 import type { Column as ColumnType, User } from '~/interfaces/projects';
 
 import { useDeleteColumnMutation } from '~/api/projectsApi';
+import { ConfirmModal } from '~/components/common';
 import { TaskCard } from './TaskCard';
 import { CreateTaskModal } from './CreateTaskModal';
 
@@ -14,19 +15,14 @@ interface ColumnProps {
 
 export function Column({ column, participants }: Readonly<ColumnProps>) {
   const [showTaskModal, setShowTaskModal] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteColumn] = useDeleteColumnMutation();
 
-  const handleDeleteColumn = async () => {
-    if (column.tasks.length > 0) {
-      if (
-        !window.confirm(
-          `Esta columna tiene ${column.tasks.length} tarea(s). ¿Eliminar de todas formas?`,
-        )
-      ) {
-        return;
-      }
-    }
+  const handleDeleteClick = () => {
+    setShowDeleteModal(true);
+  };
 
+  const handleConfirmDelete = async () => {
     try {
       await deleteColumn(column.id).unwrap();
     } catch (error) {
@@ -45,7 +41,7 @@ export function Column({ column, participants }: Readonly<ColumnProps>) {
             </span>
           </h3>
           <button
-            onClick={handleDeleteColumn}
+            onClick={handleDeleteClick}
             className="text-slate-400 dark:text-slate-500 hover:text-red-600 dark:hover:text-red-400"
             title="Eliminar columna"
           >
@@ -86,6 +82,21 @@ export function Column({ column, participants }: Readonly<ColumnProps>) {
           onClose={() => setShowTaskModal(false)}
         />
       )}
+
+      <ConfirmModal
+        isOpen={showDeleteModal}
+        onClose={() => setShowDeleteModal(false)}
+        onConfirm={handleConfirmDelete}
+        title="Eliminar columna"
+        message={
+          column.tasks.length > 0
+            ? `Esta columna tiene ${column.tasks.length} tarea(s).\n¿Estás seguro de que deseas eliminarla?\n\nEsta acción no se puede deshacer.`
+            : '¿Estás seguro de que deseas eliminar esta columna?\n\nEsta acción no se puede deshacer.'
+        }
+        confirmText="Eliminar"
+        cancelText="Cancelar"
+        variant="danger"
+      />
     </>
   );
 }

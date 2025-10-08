@@ -1,6 +1,13 @@
-import { Controller, Get, UseGuards, Request } from '@nestjs/common';
+import { Controller, Get, Delete, UseGuards, Request } from '@nestjs/common';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard';
 import { UserService } from './services/user.service';
+
+interface AuthenticatedRequest extends Request {
+  user: {
+    id: string;
+    email: string;
+  };
+}
 
 @Controller('users')
 @UseGuards(JwtAuthGuard)
@@ -8,7 +15,7 @@ export class UsersController {
   constructor(private readonly userService: UserService) {}
 
   @Get('me')
-  async getCurrentUser(@Request() req) {
+  async getCurrentUser(@Request() req: AuthenticatedRequest) {
     const userId = req.user.id;
     const user = await this.userService.findUserById(userId);
 
@@ -23,5 +30,11 @@ export class UsersController {
       createdAt: user.createdAt,
       updatedAt: user.updatedAt,
     };
+  }
+
+  @Delete('me')
+  async deleteAccount(@Request() req: AuthenticatedRequest) {
+    const userId = req.user.id;
+    return this.userService.deleteAccount(userId);
   }
 }
