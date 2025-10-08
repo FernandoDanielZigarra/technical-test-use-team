@@ -71,25 +71,19 @@ chmod 400 mongo-keyfile
 > ⚠️ **Importante:** Sin este archivo, MongoDB no iniciará correctamente.
 
 #### 4️⃣ Levantar los Contenedores
-
 ```bash
-# Construir imágenes y levantar servicios
-docker-compose up -d
-
-# Ver logs de los servicios (opcional)
-docker-compose logs -f
-
-# Verificar que todos los contenedores estén corriendo
-docker-compose ps
+# Ejecutar el siguiente archivo en PowerShell o Git Bash
+./build-and-run.sh
 ```
 
 **Resultado esperado:**
 ```
 NAME                    STATUS          PORTS
-technical-test-mongo    Up 2 minutes    0.0.0.0:27017->27017/tcp
-technical-test-backend  Up 1 minute     0.0.0.0:3000->3000/tcp
-technical-test-frontend Up 1 minute     0.0.0.0:5173->5173/tcp
-technical-test-n8n      Up 1 minute     0.0.0.0:5678->5678/tcp
+technical-test-mongo-1    Up 2 minutes    0.0.0.0:27017->27017/tcp
+technical-test-mongo-init  Up 2 minutes    ---
+technical-test-backend-1  Up 1 minute     0.0.0.0:3000->3000/tcp
+technical-test-frontend-1 Up 1 minute     0.0.0.0:5173->5173/tcp
+technical-test-n8n-1      Up 1 minute     0.0.0.0:5678->5678/tcp
 ```
 
 ### 🎉 ¡Listo! Accede a las Aplicaciones
