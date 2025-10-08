@@ -3,7 +3,7 @@ import {
   UnauthorizedException,
   ConflictException,
 } from '@nestjs/common';
-import { UserService } from '../users/services/user.service';
+import { UserService } from '../users/users.service';
 import { JwtUtils } from '../../shared/utils';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';

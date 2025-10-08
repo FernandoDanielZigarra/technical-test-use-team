@@ -58,7 +58,7 @@ export function Layout({ children }: { readonly children: React.ReactNode }) {
           }}
         />
       </head>
-      <body className="min-h-screen bg-slate-200 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100">
+      <body className="min-h-screen bg-slate-200 text-slate-900 transition-colors duration-300 dark:bg-slate-950 dark:text-slate-100" suppressHydrationWarning>
         {children}
         <ScrollRestoration />
         <Scripts />

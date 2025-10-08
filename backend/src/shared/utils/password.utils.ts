@@ -1,4 +1,11 @@
 import * as bcrypt from 'bcryptjs';
+
+/**
+ * PasswordUtils - Utilidades para el manejo seguro de contraseñas
+ *
+ * Proporciona métodos para hashear, comparar y validar contraseñas
+ * usando bcryptjs con configuraciones seguras.
+ */
 export class PasswordUtils {
   private static readonly DEFAULT_SALT_ROUNDS = 12;
 
@@ -15,7 +22,9 @@ export class PasswordUtils {
     }
 
     try {
-      return await bcrypt.hash(password, saltRounds);
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-assignment, @typescript-eslint/no-unsafe-member-access
+      const hash = await bcrypt.hash(password, saltRounds);
+      return hash as string;
     } catch (error) {
       throw new Error(
         `Error al hashear la contraseña: ${error instanceof Error ? error.message : 'Error desconocido'}`,
@@ -36,6 +45,7 @@ export class PasswordUtils {
     }
 
     try {
+      // eslint-disable-next-line @typescript-eslint/no-unsafe-return, @typescript-eslint/no-unsafe-member-access
       return await bcrypt.compare(password, hashedPassword);
     } catch (error) {
       throw new Error(
